@@ -1,12 +1,33 @@
 #!/usr/bin/perl -w
 
-# example hook script for vzdump (--script option)
+# hook script for vzdump (--script option)
+# Originally written by Proxmox, licensed under Affero GPL v3
+# Modified 2019 by Nathan Todd
 
 use strict;
+use switch;
 
-print "HOOK: " . join (' ', @ARGV) . "\n";
+print "HOOK: " . join (' ', @ARGV) . "\n";3
 
 my $phase = shift;
+
+#TODO make functions to pull out standard args and return as list
+#TODO call bespoke functions for each stage.  Functions might just be stubs that log.
+#TODO job-start: Ensure repo exists, if not, init if able to
+#TODO backup-end: Put tarfile into repo in repo list
+#TODO backup-end or pre-stop: Sync repo to remote targets from list (rclone supports local storage as a remote!)
+switch($phase) {
+    case 'job-start' {}     #DUMPDIR, STOREID
+    case 'job-end' {}       #DUMPDIR, STOREID
+    case 'job-abort' {}     #DUMPDIR, STOREID
+    case 'backup-start' {}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    case 'backup-end' {}    #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, TARFILE
+    case 'backup-abort' {}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    case 'log-end' {}       #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, LOGFILE
+    case 'pre-stop' {}      #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    case 'pre-restart' {}   #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    else {} #Log unknown phase
+}
 
 if ($phase eq 'job-start' || 
     $phase eq 'job-end'  || 
