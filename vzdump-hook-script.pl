@@ -108,6 +108,8 @@ sub readConfig {
     while (<CONFIG>) {
         next if (/^#|^\s*$/);  # skip blanks and comments
         my ($variable, $value) = split /=/;
+        $value =~ s/\n+$//;
+
         #TODO cut trailing newlines off values
         switch ($variable) {
             case "BORG_REPO_PATH" {$answer->{-borg_repo_path} = $value;}
@@ -137,18 +139,26 @@ sub jobStart {
     #TODO do I care about determining if rclone remotes already exist?  Do I set them up here, or trust the user to already have them?
     #TODO remember to shift out args and config
     print "In jobStart";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub jobEnd {
     print "In jobEnd";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub jobAbort {
     print "In jobAbort";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub backupStart {
     print "In backupStart";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub backupEnd {
@@ -156,22 +166,32 @@ sub backupEnd {
     #TODO 
     #system ("scp $tarfile backup-host:/backup-dir") == 0 || die "copy tar file to backup-host failed";
     print "In backupEnd";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub backupAbort {
     print "In backupAbort";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub logEnd {
     print "In logEnd";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub preStop {
     print "In preStop";
+    my $args = shift;
+    my $config = shift;
 }
 
 sub preRestart {
     print "In preRestart";
+    my $args = shift;
+    my $config = shift;
 }
 
 #START MAIN
