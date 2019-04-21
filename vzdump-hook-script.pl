@@ -49,54 +49,83 @@ sub extractArgs {
 }
 
 #readConfig reads the config file (consider having separate secrets file?)
-sub readConfig {
-    my %config;
-    my $cfg_path = "/etc/pxmx-borg-rclone.conf";
-    open my $fh, $cfg_path or die "Failed to open $cfg_path: $!";
+# sub readConfig {
+#     my %config;
+#     my $cfg_path = "/etc/pxmx-borg-rclone.conf";
+#     open my $fh, $cfg_path or die "Failed to open $cfg_path: $!";
 
-    # Loop across all lines in file
-    while (<$fh>) {
-    # one line of data is now in $_
-        if (m/BORG_REPO_PATH=(\S+)/) {
-            $config{-repo_path} = $1;
-            last;
-        } elsif (m/BORG_REPO_NAME=(\S+)/) {
-            $config{-repo_name} = $1;
-            last;
-        } elsif (m/BORG_COMPRESSION=(\S+)/) {
-            $config{-borg_compression} = $1;
-            last;
-        } elsif (m/RCLONE_REMOTE=(\S+)/) {
-            $config{-rclone_remote} = $1;
-            last;
-        } elsif (m/RCLONE_BUCKET_NAME=(\S+)/) {
-            $config{-rclone_bucket_name} = $1;
-            last;
-        } elsif (m/RCLONE_BWLIMIT=(\S+)/) {
-            $config{-rclone_bwlimit} = $1;
-            last;
-        } elsif (m/RCLONE_TRANSFERS=(\S+)/) {
-            $config{-rclone_transfers} = $1;
-            last;
-        } elsif (m/BORG_KEEP_YEARLY=(\S+)/) {
-            $config{-borg_keep_yearly} = $1;
-            last;
-        } elsif (m/BORG_KEEP_MONTHLY=(\S+)/) {
-            $config{-borg_keep_monthly} = $1;
-            last;
-        } elsif (m/BORG_KEEP_WEEKLY=(\S+)/) {
-            $config{-borg_keep_weekly} = $1;
-            last;
-        } elsif (m/BORG_KEEP_DAILY=(\S+)/) {
-            $config{-borg_keep_daily} = $1;
-            last;
-        } elsif (m/BORG_KEEP_HOURLY=(\S+)/) {
-            $config{-borg_keep_hourly} = $1;
-            last;
+#     # Loop across all lines in file
+#     while (<$fh>) {
+#     # one line of data is now in $_
+#         if (m/BORG_REPO_PATH=(\S+)/) {
+#             $config{-repo_path} = $1;
+#             last;
+#         } elsif (m/BORG_REPO_NAME=(\S+)/) {
+#             $config{-repo_name} = $1;
+#             last;
+#         } elsif (m/BORG_COMPRESSION=(\S+)/) {
+#             $config{-borg_compression} = $1;
+#             last;
+#         } elsif (m/RCLONE_REMOTE=(\S+)/) {
+#             $config{-rclone_remote} = $1;
+#             last;
+#         } elsif (m/RCLONE_BUCKET_NAME=(\S+)/) {
+#             $config{-rclone_bucket_name} = $1;
+#             last;
+#         } elsif (m/RCLONE_BWLIMIT=(\S+)/) {
+#             $config{-rclone_bwlimit} = $1;
+#             last;
+#         } elsif (m/RCLONE_TRANSFERS=(\S+)/) {
+#             $config{-rclone_transfers} = $1;
+#             last;
+#         } elsif (m/BORG_KEEP_YEARLY=(\S+)/) {
+#             $config{-borg_keep_yearly} = $1;
+#             last;
+#         } elsif (m/BORG_KEEP_MONTHLY=(\S+)/) {
+#             $config{-borg_keep_monthly} = $1;
+#             last;
+#         } elsif (m/BORG_KEEP_WEEKLY=(\S+)/) {
+#             $config{-borg_keep_weekly} = $1;
+#             last;
+#         } elsif (m/BORG_KEEP_DAILY=(\S+)/) {
+#             $config{-borg_keep_daily} = $1;
+#             last;
+#         } elsif (m/BORG_KEEP_HOURLY=(\S+)/) {
+#             $config{-borg_keep_hourly} = $1;
+#             last;
+#         }
+#     }
+
+#     return %config;
+# }
+
+sub readConfig {
+    my $file = "/etc/pxmx-borg-rclone.conf";
+    my %answer;
+
+    open CONFIG, "$file" or die "Couldn't read config file $file: $!\n";
+    while (<CONFIG>) {
+        next if (/^#|^\s*$/);  # skip blanks and comments
+        my ($variable, $value) = split /=/;
+        #$answer{$variable} = $value;
+        switch ($variable) {
+            case "BORG_REPO_PATH" {$answer{-borg_repo_path} = $value;}
+            case "BORG_REPO_NAME" {$answer{-borg_repo_name} = $value;}
+            case "BORG_COMPRESSION" {$answer{-borg_compression} = $value;}
+            case "BORG_KEEP_YEARLY" {$answer{-borg_keep_yearly} = $value;}
+            case "BORG_KEEP_MONTHLY" {$answer{-borg_keep_monthly} = $value;}
+            case "BORG_KEEP_WEEKLY" {$answer{-borg_keep_weekly} = $value;}
+            case "BORG_KEEP_DAILY" {$answer{-borg_keep_daily} = $value;}
+            case "BORG_KEEP_HOURLY" {$answer{-borg_keep_hourly} = $value;}
+            case "RCLONE_REMOTE" {$answer{-rclone_remote} = $value;}
+            case "RCLONE_BUCKET_NAME" {$answer{-rclone_bucket_name} = $value;}
+            case "RCLONE_BWLIMIT" {$answer{-rclone_bwlimit} = $value;}
+            case "RCLONE_TRANSFERS" {$answer{-rclone_transfers} = $value;}
         }
     }
+    close CONFIG;
 
-    return %config;
+    return %answer;
 }
 
 #Stage subroutines
