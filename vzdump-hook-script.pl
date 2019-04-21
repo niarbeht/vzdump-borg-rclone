@@ -164,15 +164,22 @@ switch ($args{-phase}) {
 
 my %config = readConfig();
 
-foreach my $key (keys %args) {
-    my $value = $args{$key};
-    print "HOOK ARG: $key=$value";
-}
+my $key;
+my $value;
 
-foreach my $key (keys %config) {
-    my $value = $args{$key};
-    print "HOOK CONF: $key=$value";
+print "HOOK ARG:";
+while (($key, $value) = each (%args)) {
+    $value = $args{$key};
+    print " $key = $value;";
 }
+print "\n";
+
+print "HOOK CONF:";
+while (($key, $value) = each (%config)) {
+    $value = $args{$key};
+    print " $key = $value;";
+}
+print "\n";
 
 #TODO make test script to dump args output to file to see what the args look like
 
