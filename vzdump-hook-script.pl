@@ -15,7 +15,7 @@ print "HOOK: " . join (' ', @ARGV) . "\n";
 #Arg extractors
 #extractArgs takes the existing %args and returns an expanded %args as appropriate for our stage.
 sub extractArgs {
-    my $args = @_;
+    my $args = shift;
 
     switch ($args->{-phase}) {
         case "log-end" {next;}
@@ -101,34 +101,33 @@ sub extractArgs {
 # }
 
 sub readConfig {
+    my $answer = shift;
     my $file = "/etc/pxmx-borg-rclone.conf";
-    my %answer;
 
     open CONFIG, "$file" or die "Couldn't read config file $file: $!\n";
     while (<CONFIG>) {
         next if (/^#|^\s*$/);  # skip blanks and comments
         my ($variable, $value) = split /=/;
-        #$answer{$variable} = $value;
-        print "$variable $value \n";
+        #TODO cut trailing newlines off values
         switch ($variable) {
-            case "BORG_REPO_PATH" {$answer{-borg_repo_path} = $value;}
-            case "BORG_REPO_NAME" {$answer{-borg_repo_name} = $value;}
-            case "BORG_COMPRESSION" {$answer{-borg_compression} = $value;}
-            case "BORG_KEEP_YEARLY" {$answer{-borg_keep_yearly} = $value;}
-            case "BORG_KEEP_MONTHLY" {$answer{-borg_keep_monthly} = $value;}
-            case "BORG_KEEP_WEEKLY" {$answer{-borg_keep_weekly} = $value;}
-            case "BORG_KEEP_DAILY" {$answer{-borg_keep_daily} = $value;}
-            case "BORG_KEEP_HOURLY" {$answer{-borg_keep_hourly} = $value;}
-            case "RCLONE_REMOTE" {$answer{-rclone_remote} = $value;}
-            case "RCLONE_BUCKET_NAME" {$answer{-rclone_bucket_name} = $value;}
-            case "RCLONE_BWLIMIT" {$answer{-rclone_bwlimit} = $value;}
-            case "RCLONE_TRANSFERS" {$answer{-rclone_transfers} = $value;}
-            else {$answer{$variable} = $value;}
+            case "BORG_REPO_PATH" {$answer->{-borg_repo_path} = $value;}
+            case "BORG_REPO_NAME" {$answer->{-borg_repo_name} = $value;}
+            case "BORG_COMPRESSION" {$answer->{-borg_compression} = $value;}
+            case "BORG_KEEP_YEARLY" {$answer->{-borg_keep_yearly} = $value;}
+            case "BORG_KEEP_MONTHLY" {$answer->{-borg_keep_monthly} = $value;}
+            case "BORG_KEEP_WEEKLY" {$answer->{-borg_keep_weekly} = $value;}
+            case "BORG_KEEP_DAILY" {$answer->{-borg_keep_daily} = $value;}
+            case "BORG_KEEP_HOURLY" {$answer->{-borg_keep_hourly} = $value;}
+            case "RCLONE_REMOTE" {$answer->{-rclone_remote} = $value;}
+            case "RCLONE_BUCKET_NAME" {$answer->{-rclone_bucket_name} = $value;}
+            case "RCLONE_BWLIMIT" {$answer->{-rclone_bwlimit} = $value;}
+            case "RCLONE_TRANSFERS" {$answer->{-rclone_transfers} = $value;}
+            else {$answer->{$variable} = $value;}
         }
     }
     close CONFIG;
 
-    return \%answer;
+    return $answer;
 }
 
 #Stage subroutines
@@ -175,6 +174,8 @@ sub preRestart {
     print "In preRestart";
 }
 
+#START MAIN
+
 my $args = {};
 
 $args->{-phase} = shift;
@@ -194,7 +195,8 @@ switch ($args->{-phase}) {
 
 $args = extractArgs($args);
 
-my $config = readConfig();
+my $config = {};
+$config = readConfig($config);
 
 my $key;
 my $value;
@@ -208,7 +210,7 @@ print "\n";
 
 print "HOOK CONF:";
 while (($key, $value) = each (%{$config})) {
-    $value = $args->{$key};
+    $value = $config->{$key};
     print " $key = $value;";
 }
 print "\n";
