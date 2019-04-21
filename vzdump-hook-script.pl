@@ -5,6 +5,7 @@
 # Modified 2019 by Nathan Todd
 
 use strict;
+use warnings;
 use Switch;
 
 print "HOOK: " . join (' ', @ARGV) . "\n";
@@ -14,15 +15,15 @@ print "HOOK: " . join (' ', @ARGV) . "\n";
 #Arg extractors
 #extractArgs takes the existing %args and returns an expanded %args as appropriate for our stage.
 sub extractArgs {
-    my %args = @_;
+    my $args = @_;
 
-    switch ($args{-phase}) {
+    switch ($args->{-phase}) {
         case "log-end" {next;}
         case "backup-end" {
-            if ($args{-phase} eq "log-end") {
-                $args{-logfile} = $ENV{"LOGFILE"};
-            } elsif ($args{-phase} eq "backup-end") {
-                $args{-tarfile} = $ENV{"TARFILE"};
+            if ($args->{-phase} eq "log-end") {
+                $args->{-logfile} = $ENV{"LOGFILE"};
+            } elsif ($args->{-phase} eq "backup-end") {
+                $args->{-tarfile} = $ENV{"TARFILE"};
             }
             next;
         }
@@ -32,20 +33,20 @@ sub extractArgs {
         case "log-end" {next;}
         case "backup-end" {next;}
         case "pre-restart" { #VMTYPE, DUMPDIR, STOREID, HOSTNAME
-            $args{-vmtype} = $ENV{"VMTYPE"};
-            $args{-hostname} = $ENV{"HOSTNAME"};
+            $args->{-vmtype} = $ENV{"VMTYPE"};
+            $args->{-hostname} = $ENV{"HOSTNAME"};
             next;
         }
         case "job-start" {next;}
         case "job-end" {next;}
         case "job-abort" { #DUMPDIR, STOREID
-            $args{-dumpdir} = $ENV{"DUMPDIR"};
-            $args{-storeid} = $ENV{"STOREID"};
+            $args->{-dumpdir} = $ENV{"DUMPDIR"};
+            $args->{-storeid} = $ENV{"STOREID"};
         }
         else {} #TODO Log unknown phase
     }
 
-    return %args;
+    return $args;
 }
 
 #readConfig reads the config file (consider having separate secrets file?)
@@ -108,6 +109,7 @@ sub readConfig {
         next if (/^#|^\s*$/);  # skip blanks and comments
         my ($variable, $value) = split /=/;
         #$answer{$variable} = $value;
+        print "$variable $value \n";
         switch ($variable) {
             case "BORG_REPO_PATH" {$answer{-borg_repo_path} = $value;}
             case "BORG_REPO_NAME" {$answer{-borg_repo_name} = $value;}
@@ -121,11 +123,12 @@ sub readConfig {
             case "RCLONE_BUCKET_NAME" {$answer{-rclone_bucket_name} = $value;}
             case "RCLONE_BWLIMIT" {$answer{-rclone_bwlimit} = $value;}
             case "RCLONE_TRANSFERS" {$answer{-rclone_transfers} = $value;}
+            else {$answer{$variable} = $value;}
         }
     }
     close CONFIG;
 
-    return %answer;
+    return \%answer;
 }
 
 #Stage subroutines
@@ -172,40 +175,40 @@ sub preRestart {
     print "In preRestart";
 }
 
-my %args;
+my $args = {};
 
-$args{-phase} = shift;
+$args->{-phase} = shift;
 
 #Check if we should shift mode and vmid
-switch ($args{-phase}) {
+switch ($args->{-phase}) {
     case "backup-start" {next;}
     case "backup-end" {next;}
     case "backup-abort" {next;}
     case "log-end" {next;}
     case "pre-stop" {next;}
     case "pre-restart" {
-        $args{-mode} = shift; 
-        $args{-vmid} = shift;
+        $args->{-mode} = shift; 
+        $args->{-vmid} = shift;
     }
 }
 
-%args = extractArgs(%args);
+$args = extractArgs($args);
 
-my %config = readConfig();
+my $config = readConfig();
 
 my $key;
 my $value;
 
 print "HOOK ARG:";
-while (($key, $value) = each (%args)) {
-    $value = $args{$key};
+while (($key, $value) = each (%{$args})) {
+    $value = $args->{$key};
     print " $key = $value;";
 }
 print "\n";
 
 print "HOOK CONF:";
-while (($key, $value) = each (%config)) {
-    $value = $args{$key};
+while (($key, $value) = each (%{$config})) {
+    $value = $args->{$key};
     print " $key = $value;";
 }
 print "\n";
@@ -217,17 +220,17 @@ print "\n";
 #TODO job-start: Ensure repo exists, if not, init if able to
 #TODO backup-end: Put tarfile into repo in repo list
 #TODO backup-end or pre-stop: Sync repo to remote targets from list (rclone supports local storage as a remote!)
-switch($args{-phase}) {
-    case "job-start" {jobStart(%args, %config);}        #DUMPDIR, STOREID
-    case "job-end" {jobEnd(%args, %config);}            #DUMPDIR, STOREID
-    case "job-abort" {jobAbort(%args, %config);}        #DUMPDIR, STOREID
-    case "backup-start" {backupStart(%args, %config);}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
-    case "backup-end" {backupEnd(%args, %config);}      #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, TARFILE
-    case "backup-abort" {backupAbort(%args, %config);}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
-    case "log-end" {logEnd(%args, %config);}            #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, LOGFILE
-    case "pre-stop" {preStop(%args, %config);}          #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
-    case "pre-restart" {preRestart(%args, %config);}    #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
-    else {die "got unknown phase '$args{-phase}'";} #TODO Log unknown phase
+switch($args->{-phase}) {
+    case "job-start" {jobStart($args, $config);}        #DUMPDIR, STOREID
+    case "job-end" {jobEnd($args, $config);}            #DUMPDIR, STOREID
+    case "job-abort" {jobAbort($args, $config);}        #DUMPDIR, STOREID
+    case "backup-start" {backupStart($args, $config);}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    case "backup-end" {backupEnd($args, $config);}      #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, TARFILE
+    case "backup-abort" {backupAbort($args, $config);}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    case "log-end" {logEnd($args, $config);}            #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, LOGFILE
+    case "pre-stop" {preStop($args, $config);}          #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    case "pre-restart" {preRestart($args, $config);}    #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    else {die "got unknown phase '$args->{-phase}'";} #TODO Log unknown phase
 }
 
 exit (0);
