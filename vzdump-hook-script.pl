@@ -139,8 +139,8 @@ sub backupEnd {
     my $config = shift;
     my $borg_secret = shift;
     my @borg_create_command = ['borg', 'create',
-        "--compression=$config->{-borg_compression}",
-        "$config->{-borg_repo_path}".'/'."$config->{-borg_repo_name}".'::'."$args->{-vmtype}-$args->{-vmid}-\{now:\%Y-\%m-\%d_\%H-\%M-\%S\}",
+        '--compression='."$config->{-borg_compression}",
+        "$config->{-borg_repo_path}".'/'."$config->{-borg_repo_name}".'::'."$args->{-vmtype}".'-'."$args->{-vmid}".'-{now:%Y-%m-%d_%H-%M-%S}',
         "$args->{-tarfile}"];
     my @borg_prune_command = [];
 
