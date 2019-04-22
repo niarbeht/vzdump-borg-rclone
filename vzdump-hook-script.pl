@@ -144,7 +144,8 @@ sub backupEnd {
         "$args->{-tarfile}"];
     my @borg_prune_command = [];
 
-    for my $s (@borg_create_command) {
+    for (my $i = 0; $i < @borg_create_command; $i++) {
+        my $s = $borg_create_command[$i];
         print "$s ";
     }
     print "\n";
