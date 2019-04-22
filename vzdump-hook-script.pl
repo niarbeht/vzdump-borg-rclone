@@ -92,7 +92,7 @@ sub readPassword {
         next if (/^#|^\s*$/);  # skip blanks and comments
         my ($variable, $value) = split /=/;
         $value =~ s/\n+$//; #cut newlines
-        if($variable eq 'BORG_PASSPHRASE') {
+        if($variable eq 'PASSWORD') {
             $answer = $value;
         }
     }
