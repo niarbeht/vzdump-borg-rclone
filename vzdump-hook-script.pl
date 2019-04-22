@@ -49,57 +49,6 @@ sub extractArgs {
     return $args;
 }
 
-#readConfig reads the config file (consider having separate secrets file?)
-# sub readConfig {
-#     my %config;
-#     my $cfg_path = "/etc/pxmx-borg-rclone.conf";
-#     open my $fh, $cfg_path or die "Failed to open $cfg_path: $!";
-
-#     # Loop across all lines in file
-#     while (<$fh>) {
-#     # one line of data is now in $_
-#         if (m/BORG_REPO_PATH=(\S+)/) {
-#             $config{-repo_path} = $1;
-#             last;
-#         } elsif (m/BORG_REPO_NAME=(\S+)/) {
-#             $config{-repo_name} = $1;
-#             last;
-#         } elsif (m/BORG_COMPRESSION=(\S+)/) {
-#             $config{-borg_compression} = $1;
-#             last;
-#         } elsif (m/RCLONE_REMOTE=(\S+)/) {
-#             $config{-rclone_remote} = $1;
-#             last;
-#         } elsif (m/RCLONE_BUCKET_NAME=(\S+)/) {
-#             $config{-rclone_bucket_name} = $1;
-#             last;
-#         } elsif (m/RCLONE_BWLIMIT=(\S+)/) {
-#             $config{-rclone_bwlimit} = $1;
-#             last;
-#         } elsif (m/RCLONE_TRANSFERS=(\S+)/) {
-#             $config{-rclone_transfers} = $1;
-#             last;
-#         } elsif (m/BORG_KEEP_YEARLY=(\S+)/) {
-#             $config{-borg_keep_yearly} = $1;
-#             last;
-#         } elsif (m/BORG_KEEP_MONTHLY=(\S+)/) {
-#             $config{-borg_keep_monthly} = $1;
-#             last;
-#         } elsif (m/BORG_KEEP_WEEKLY=(\S+)/) {
-#             $config{-borg_keep_weekly} = $1;
-#             last;
-#         } elsif (m/BORG_KEEP_DAILY=(\S+)/) {
-#             $config{-borg_keep_daily} = $1;
-#             last;
-#         } elsif (m/BORG_KEEP_HOURLY=(\S+)/) {
-#             $config{-borg_keep_hourly} = $1;
-#             last;
-#         }
-#     }
-
-#     return %config;
-# }
-
 sub readConfig {
     my $answer = shift;
     my $file = "/etc/pxmx-borg-rclone.conf";
@@ -125,6 +74,24 @@ sub readConfig {
             case "RCLONE_BWLIMIT" {$answer->{-rclone_bwlimit} = $value;}
             case "RCLONE_TRANSFERS" {$answer->{-rclone_transfers} = $value;}
             else {$answer->{$variable} = $value;}
+        }
+    }
+    close CONFIG;
+
+    return $answer;
+}
+
+sub readPassword {
+    my $answer = 0;
+    my $file = "/borg/pxmx-borg-password.conf";
+
+    open CONFIG, "$file" or die "Couldn't read config file $file: $!\n";
+    while (<CONFIG>) {
+        next if (/^#|^\s*$/);  # skip blanks and comments
+        my ($variable, $value) = split /=/;
+        $value =~ s/\n+$//;
+        if($variable eq "BORG_PASSPHRASE") {
+            $answer = $value;
         }
     }
     close CONFIG;
@@ -194,6 +161,12 @@ sub preRestart {
     my $config = shift;
 }
 
+sub postRestart {
+    print "In postRestart";
+    my $args = shift;
+    my $config = shift;
+}
+
 #START MAIN
 
 my $args = {};
@@ -207,7 +180,8 @@ switch ($args->{-phase}) {
     case "backup-abort" {next;}
     case "log-end" {next;}
     case "pre-stop" {next;}
-    case "pre-restart" {
+    case "pre-restart" {next;}
+    case "post-restart" {
         $args->{-mode} = shift; 
         $args->{-vmid} = shift;
     }
@@ -247,11 +221,12 @@ switch($args->{-phase}) {
     case "job-end" {jobEnd($args, $config);}            #DUMPDIR, STOREID
     case "job-abort" {jobAbort($args, $config);}        #DUMPDIR, STOREID
     case "backup-start" {backupStart($args, $config);}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
-    case "backup-end" {backupEnd($args, $config);}      #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, TARFILE
+    case "backup-end" {backupEnd($args, $config, $borg_secret);}      #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, TARFILE
     case "backup-abort" {backupAbort($args, $config);}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
     case "log-end" {logEnd($args, $config);}            #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME, LOGFILE
     case "pre-stop" {preStop($args, $config);}          #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
     case "pre-restart" {preRestart($args, $config);}    #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
+    case "post-restart" {postRestart($args, $config);}  #mode, vmid, VMTYPE, DUMPDIR, STOREID, HOSTNAME
     else {die "got unknown phase '$args->{-phase}'";} #TODO Log unknown phase
 }
 
