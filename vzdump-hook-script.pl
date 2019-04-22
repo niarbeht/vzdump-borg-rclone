@@ -153,7 +153,7 @@ sub backupEnd {
     #rclone sync $REPO_PATH/$REPO_NAME $RCLONE_REMOTE:$BUCKET_NAME --bwlimit=$RCLONE_BWLIMIT --transfers=$RCLONE_TRANSFERS
     my @rclone_command = ('rclone', 'sync', "$config->{-borg_repo_path}/$config->{-borg_repo_name}", 
         "$config->{-rclone_remote}:$config->{-rclone_bucket_name}", "--bwlimit=$config->{-rclone_bwlimit}", 
-        "--transfers=$config->{-rclone_transfers}");
+        "--transfers=$config->{-rclone_transfers}", '--quiet'); #TODO make rclone quiet, maybe only starting and ending messages?
 
     # for (my $i = 0; $i < @borg_create_command; $i++) {
     #     my $s = $borg_create_command[$i];
