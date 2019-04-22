@@ -144,6 +144,11 @@ sub backupEnd {
         "$args->{-tarfile}"];
     my @borg_prune_command = [];
 
+    for my $s (@borg_create_command) {
+        print "$s ";
+    }
+    print "\n";
+
     #borg create --compression=$COMPRESSION $REPO_PATH/$REPO_NAME::vzdump-$1-{now:%Y-%m-%d_%H-%M-%S} $TARGETS/vzdump-*-$1-*
     #rm $TARGETS/vzdump-*-$1-*
     #borg prune --save-space --keep-yearly=$KEEP_YEARLY --keep-monthly=$KEEP_MONTHLY --keep-weekly=$KEEP_WEEKLY --keep-daily=$KEEP_DAILY --keep-hourly=$KEEP_HOURLY --prefix=vzdump-$1- $REPO_PATH/$REPO_NAME
