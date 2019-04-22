@@ -7,7 +7,7 @@
 use strict;
 use warnings;
 
-print "HOOK: " . join (' ', @ARGV) . "\n";
+#print "HOOK: " . join (' ', @ARGV) . "\n";
 
 #Done with main, all subroutines from here on out
 
@@ -107,25 +107,25 @@ sub jobStart {
     #TODO if repo is not init'd, init it
     #TODO do I care about determining if rclone remotes already exist?  Do I set them up here, or trust the user to already have them?
     #TODO remember to shift out args and config
-    print "In jobStart\n";
+    #print "In jobStart\n";
     my $args = shift;
     my $config = shift;
 }
 
 sub jobEnd {
-    print "In jobEnd\n";
+    #print "In jobEnd\n";
     my $args = shift;
     my $config = shift;
 }
 
 sub jobAbort {
-    print "In jobAbort\n";
+    #print "In jobAbort\n";
     my $args = shift;
     my $config = shift;
 }
 
 sub backupStart {
-    print "In backupStart\n";
+    #print "In backupStart\n";
     my $args = shift;
     my $config = shift;
 }
@@ -134,7 +134,7 @@ sub backupEnd {
     #TODO put tarfile into repo
     #TODO 
     #system ("scp $tarfile backup-host:/backup-dir") == 0 || die "copy tar file to backup-host failed";
-    print "In backupEnd\n";
+    #print "In backupEnd\n";
     my $args = shift;
     my $config = shift;
     my $borg_secret = shift;
@@ -171,31 +171,31 @@ sub backupEnd {
 }
 
 sub backupAbort {
-    print "In backupAbort\n";
+    #print "In backupAbort\n";
     my $args = shift;
     my $config = shift;
 }
 
 sub logEnd {
-    print "In logEnd\n";
+    #print "In logEnd\n";
     my $args = shift;
     my $config = shift;
 }
 
 sub preStop {
-    print "In preStop\n";
+    #print "In preStop\n";
     my $args = shift;
     my $config = shift;
 }
 
 sub preRestart {
-    print "In preRestart\n";
+    #print "In preRestart\n";
     my $args = shift;
     my $config = shift;
 }
 
 sub postRestart {
-    print "In postRestart\n";
+    #print "In postRestart\n";
     my $args = shift;
     my $config = shift;
 }
@@ -221,22 +221,22 @@ $config = readConfig($config);
 
 my $borg_secret = readPassword();
 
-my $key;
-my $value;
+# my $key;
+# my $value;
 
-print 'HOOK ARG:';
-while (($key, $value) = each (%{$args})) {
-    $value = $args->{$key};
-    print " $key = $value;";
-}
-print "\n";
+# print 'HOOK ARG:';
+# while (($key, $value) = each (%{$args})) {
+#     $value = $args->{$key};
+#     print " $key = $value;";
+# }
+# print "\n";
 
-print 'HOOK CONF:';
-while (($key, $value) = each (%{$config})) {
-    $value = $config->{$key};
-    print " $key = $value;";
-}
-print "\n";
+# print 'HOOK CONF:';
+# while (($key, $value) = each (%{$config})) {
+#     $value = $config->{$key};
+#     print " $key = $value;";
+# }
+# print "\n";
 
 #TODO make test script to dump args output to file to see what the args look like
 
