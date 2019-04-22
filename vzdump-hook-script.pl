@@ -160,7 +160,7 @@ sub backupEnd {
     #     print "$s ";
     # }
     # print "\n";
-    .
+    
     $ENV{BORG_PASSPHRASE} = $borg_secret; #todo figure out how to use BORG_PASSPHRASE_FD to avoid ever letting the secret out
     system(@borg_create_command);
     #system(@rm_command);
