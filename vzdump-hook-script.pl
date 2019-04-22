@@ -152,6 +152,7 @@ sub backupEnd {
     #borg prune --save-space --keep-yearly=$KEEP_YEARLY --keep-monthly=$KEEP_MONTHLY --keep-weekly=$KEEP_WEEKLY --keep-daily=$KEEP_DAILY --keep-hourly=$KEEP_HOURLY --prefix=vzdump-$1- $REPO_PATH/$REPO_NAME
     #rclone sync $REPO_PATH/$REPO_NAME $RCLONE_REMOTE:$BUCKET_NAME --bwlimit=$RCLONE_BWLIMIT --transfers=$RCLONE_TRANSFERS
     $ENV{BORG_PASSPHRASE} = $borg_secret;
+    print "SECRET: $borg_secret\nBORG_PASSPHRASE: $ENV{BORG_PASSPHRASE}\n";
     system(@borg_create_command);
     #system(@borg_prune_command);
     #prune here
