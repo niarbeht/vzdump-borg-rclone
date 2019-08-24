@@ -83,24 +83,6 @@ sub readConfig {
     return $answer;
 }
 
-sub readPassword {
-    my $answer = 0;
-    my $file = '/borg/pxmx-borg-password.conf';
-
-    open CONFIG, "$file" or die "Couldn't read config file $file: $!\n";
-    while (<CONFIG>) {
-        next if (/^#|^\s*$/);  # skip blanks and comments
-        my ($variable, $value) = split /=/;
-        $value =~ s/\n+$//; #cut newlines
-        if($variable eq 'PASSWORD') {
-            $answer = $value;
-        }
-    }
-    close CONFIG;
-
-    return $answer;
-}
-
 #Stage subroutines
 sub jobStart {
     #TODO check if repo is init'd
@@ -200,75 +182,58 @@ sub postRestart {
     my $config = shift;
 }
 
+sub main {
+    my $args = {};
+
+    $args->{-phase} = shift;
+
+    #Check if we should shift mode and vmid
+    if($args->{-phase} eq 'backup-start' or $args->{-phase} eq 'backup-end' or $args->{-phase} eq 'backup-abort' or $args->{-phase} eq 'log-end' or 
+        $args->{-phase} eq 'pre-stop' or $args->{-phase} eq 'pre-restart' or $args->{-phase} eq 'post-restart') {
+        $args->{-mode} = shift; 
+        $args->{-vmid} = shift;
+    }
+
+    $args = extractArgs($args);
+
+    my $config = {};
+    $config = readConfig($config);
+
+    #TODO make test script to dump args output to file to see what the args look like
+
+    #TODO [X] make functions to pull out standard args and return as list
+    #TODO [X] call bespoke functions for each stage.  Functions might just be stubs that log.
+    #TODO [ ] job-start: Ensure repo exists, if not, init if able to
+    #TODO [ ] backup-end: Put tarfile into repo in repo list
+    #TODO [ ] backup-end or pre-stop: Sync repo to remote targets from list (rclone supports local storage as a remote!)
+
+    if($args->{-phase} eq 'job-start') {
+        jobStart($args, $config);
+    } elsif ($args->{-phase} eq 'job-end') {
+        jobEnd($args, $config);
+    } elsif ($args->{-phase} eq 'job-abort') {
+        jobAbort($args, $config);
+    } elsif ($args->{-phase} eq 'backup-start') {
+        backupStart($args, $config);
+    } elsif ($args->{-phase} eq 'backup-end') {
+        backupEnd($args, $config);
+    } elsif ($args->{-phase} eq 'backup-abort') {
+        backupAbort($args, $config);
+    } elsif ($args->{-phase} eq 'log-end') {
+        logEnd($args, $config);
+    } elsif ($args->{-phase} eq 'pre-stop') {
+        preStop($args, $config);
+    } elsif ($args->{-phase} eq 'pre-restart') {
+        preRestart($args, $config);
+    } elsif ($args->{-phase} eq 'post-restart') {
+        postRestart($args, $config);
+    } else {
+        die "got unknown phase '$args->{-phase}'";
+    }
+
+    exit (0);
+}
+
 #START MAIN
 
-my $args = {};
-
-$args->{-phase} = shift;
-
-#Check if we should shift mode and vmid
-if($args->{-phase} eq 'backup-start' or $args->{-phase} eq 'backup-end' or $args->{-phase} eq 'backup-abort' or $args->{-phase} eq 'log-end' or 
-    $args->{-phase} eq 'pre-stop' or $args->{-phase} eq 'pre-restart' or $args->{-phase} eq 'post-restart') {
-    $args->{-mode} = shift; 
-    $args->{-vmid} = shift;
-
-}
-
-$args = extractArgs($args);
-
-my $config = {};
-$config = readConfig($config);
-
-# my $borg_secret = readPassword(); #This is old, we don't need to do this anymore.  Also, it's bad.  Very bad.
-
-# my $key;
-# my $value;
-
-# print 'HOOK ARG:';
-# while (($key, $value) = each (%{$args})) {
-#     $value = $args->{$key};
-#     print " $key = $value;";
-# }
-# print "\n";
-
-# print 'HOOK CONF:';
-# while (($key, $value) = each (%{$config})) {
-#     $value = $config->{$key};
-#     print " $key = $value;";
-# }
-# print "\n";
-
-#TODO make test script to dump args output to file to see what the args look like
-
-#TODO make functions to pull out standard args and return as list
-#TODO call bespoke functions for each stage.  Functions might just be stubs that log.
-#TODO job-start: Ensure repo exists, if not, init if able to
-#TODO backup-end: Put tarfile into repo in repo list
-#TODO backup-end or pre-stop: Sync repo to remote targets from list (rclone supports local storage as a remote!)
-
-if($args->{-phase} eq 'job-start') {
-    jobStart($args, $config);
-} elsif ($args->{-phase} eq 'job-end') {
-    jobEnd($args, $config);
-} elsif ($args->{-phase} eq 'job-abort') {
-    jobAbort($args, $config);
-} elsif ($args->{-phase} eq 'backup-start') {
-    backupStart($args, $config);
-} elsif ($args->{-phase} eq 'backup-end') {
-    backupEnd($args, $config);
-} elsif ($args->{-phase} eq 'backup-abort') {
-    backupAbort($args, $config);
-} elsif ($args->{-phase} eq 'log-end') {
-    logEnd($args, $config);
-} elsif ($args->{-phase} eq 'pre-stop') {
-    preStop($args, $config);
-} elsif ($args->{-phase} eq 'pre-restart') {
-    preRestart($args, $config);
-} elsif ($args->{-phase} eq 'post-restart') {
-    postRestart($args, $config);
-} else {
-    die "got unknown phase '$args->{-phase}'";
-}
-
-exit (0);
-
+exit(main(@ARGV));
