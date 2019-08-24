@@ -76,6 +76,8 @@ sub readConfig {
             $answer->{-rclone_transfers} = $value;
         } elsif ($variable eq 'BORG_SECRETS_FILE') {
             $answer->{-borg_secrets_file} = $value;
+        } elsif ($variable eq 'BORG_PASSPHRASE_COMMAND') {
+            $answer->{-borg_passphrase_command} = $value;
         } else {
             $answer->{$variable} = $value;
         }
@@ -128,23 +130,15 @@ sub backupEnd {
         "$args->{-tarfile}");
     #TODO rm $TARGETS/vzdump-*-$1-*
     my @rm_command = ();
-    #borg prune --save-space --keep-yearly=$KEEP_YEARLY --keep-monthly=$KEEP_MONTHLY --keep-weekly=$KEEP_WEEKLY --keep-daily=$KEEP_DAILY --keep-hourly=$KEEP_HOURLY --prefix=vzdump-$1- $REPO_PATH/$REPO_NAME
     my @borg_prune_command = ('borg', 'prune', '--save-space', "--keep-yearly=$config->{-borg_keep_yearly}", 
         "--keep-monthly=$config->{-borg_keep_monthly}", "--keep-weekly=$config->{-borg_keep_weekly}", 
         "--keep-daily=$config->{-borg_keep_daily}", "--keep-hourly=$config->{-borg_keep_hourly}", 
         "--prefix=vzdump-$args->{-vmtype}-$args->{-vmid}-", "$config->{-borg_repo_path}/$config->{-borg_repo_name}");
-    #rclone sync $REPO_PATH/$REPO_NAME $RCLONE_REMOTE:$BUCKET_NAME --bwlimit=$RCLONE_BWLIMIT --transfers=$RCLONE_TRANSFERS
     my @rclone_command = ('rclone', 'sync', "$config->{-borg_repo_path}/$config->{-borg_repo_name}", 
         "$config->{-rclone_remote}:$config->{-rclone_bucket_name}", "--bwlimit=$config->{-rclone_bwlimit}", 
         "--transfers=$config->{-rclone_transfers}", '--quiet'); #TODO make rclone quiet, maybe only starting and ending messages?
 
-    # for (my $i = 0; $i < @borg_create_command; $i++) {
-    #     my $s = $borg_create_command[$i];
-    #     print "$s ";
-    # }
-    # print "\n";
-    
-    $ENV{BORG_PASSCOMMAND} = 'cat' . ' ' . $config->{-borg_secrets_file}; #This could instead be a setup for BORG_PASSPHRASE_FD.
+    $ENV{BORG_PASSCOMMAND} = $config->{-borg_passphrase_command} . ' ' . $config->{-borg_secrets_file}; #This could instead be a setup for BORG_PASSPHRASE_FD.
     system(@borg_create_command);
     #system(@rm_command);
     system(@borg_prune_command);
