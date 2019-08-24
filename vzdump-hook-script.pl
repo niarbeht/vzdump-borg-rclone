@@ -219,7 +219,7 @@ $args = extractArgs($args);
 my $config = {};
 $config = readConfig($config);
 
-my $borg_secret = readPassword();
+# my $borg_secret = readPassword(); #This is old, we don't need to do this anymore.  Also, it's bad.  Very bad.
 
 # my $key;
 # my $value;
