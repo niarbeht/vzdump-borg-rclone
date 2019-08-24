@@ -161,7 +161,7 @@ sub backupEnd {
     # }
     # print "\n";
     
-    $ENV{BORG_PASSPHRASE} = $borg_secret; #todo figure out how to use BORG_PASSPHRASE_FD to avoid ever letting the secret out
+    $ENV{BORG_PASSCOMMAND} = 'cat ' . '/borg/pxmx-borg-password.conf'; #This could instead be a setup for BORG_PASSPHRASE_FD
     system(@borg_create_command);
     #system(@rm_command);
     system(@borg_prune_command);
