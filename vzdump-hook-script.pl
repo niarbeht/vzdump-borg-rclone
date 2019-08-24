@@ -74,6 +74,8 @@ sub readConfig {
             $answer->{-rclone_bwlimit} = $value;
         } elsif ($variable eq 'RCLONE_TRANSFERS') {
             $answer->{-rclone_transfers} = $value;
+        } elsif ($variable eq 'BORG_SECRETS_FILE') {
+            $answer->{-borg_secrets_file} = $value;
         } else {
             $answer->{$variable} = $value;
         }
@@ -119,7 +121,6 @@ sub backupEnd {
     #print "In backupEnd\n";
     my $args = shift;
     my $config = shift;
-    #my $borg_secret = shift;
 
     #borg create --compression=$COMPRESSION $REPO_PATH/$REPO_NAME::vzdump-$1-{now:%Y-%m-%d_%H-%M-%S} $TARGETS/vzdump-*-$1-*
     my @borg_create_command = ('borg', 'create', '--compression='."$config->{-borg_compression}", 
@@ -143,13 +144,11 @@ sub backupEnd {
     # }
     # print "\n";
     
-    $ENV{BORG_PASSCOMMAND} = 'cat ' . '/borg/pxmx-borg-password.conf'; #This could instead be a setup for BORG_PASSPHRASE_FD.
+    $ENV{BORG_PASSCOMMAND} = 'cat' . ' ' . $config->{-borg_secrets_file}; #This could instead be a setup for BORG_PASSPHRASE_FD.
     system(@borg_create_command);
     #system(@rm_command);
     system(@borg_prune_command);
     system(@rclone_command);
-    #prune here
-    $ENV{BORG_PASSPHRASE} = ""; #clear secret from env just for kicks
 }
 
 sub backupAbort {
